@@ -1,45 +1,38 @@
 import { NextFunction, Request, Response } from "express";
 import axios from 'axios'
-import { noTimeDate } from "../utils/dates.util";
+import { generateDailyURL } from "../utils/util";
+import { DailyValuesResponse } from "../models/usgs.models";
+import { DischargeValue } from "../models/daily.model";
 
-// const sites: string[] = [
-//   '06670500',
-//   '06657000',
-//   '06656000',
-//   '06652800',
-//   '06650000',
-//   '06645000',
-//   '06643500',
-//   '06642000',
-//   '06639000',
-//   '06641000',
-//   '06636000',
-//   '06635000',
-//   '06630000',
-//   '06627000',
-//   '06620000'
-// ]
-
-const siteArgs = {
-  type: 'ST',
-  status: 'all'
-}
-
-export async function fetchData(req: Request, res: Response) {
+export async function fetchDischargeData(req: Request, res: Response) {
   try {
     const {start, end, sites} = req.body
     if(!start || !end || !sites || !sites.length) throw Error('Invalid parameters')
 
-    const startDT = noTimeDate(new Date(start))
-    const endDT = noTimeDate(new Date(end))
+    const startDate = new Date(start)
+    const endDate = new Date(end)
 
-    const queryUrl = `//waterservices.usgs.gov/nwis/dv/?format=json&sites=${sites.join(',')}&startDT=${startDT}&endDT=${endDT}&siteStatus=${siteArgs.status}`
+    const url = generateDailyURL({endDate, startDate, sites, parameterCodes: ['00060'], statisticCodes: ['00003']})
 
-    const qRes = await axios.get(queryUrl)
+    const qRes = await axios.get(url)
+
     if(!qRes.data) throw Error('No data returned')
 
-    res.status(200).send(res.json(qRes.data))
+    const data: DailyValuesResponse = qRes.data
+
+    const result: {[site:string]: DischargeValue} = {}
+    for(let series of data.value.timeSeries){
+      const siteName = series.sourceInfo.siteName
+      const siteCode = series.sourceInfo.siteCode[0].value
+      if(!(siteName in result)) result[siteName] = { siteName, siteCode, values:[] }
+      
+      const values = series.values[0].value.map(v => ({discharge: v.value, date: v.dateTime, qualifier: v.qualifiers[0]}))
+      result[siteName].values.push(...values)
+    }
+
+    res.json(Object.values(result))
+
   } catch (error) {
-    res.status(406).send({error})
+    
   }
 }

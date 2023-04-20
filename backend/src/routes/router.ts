@@ -1,8 +1,8 @@
 import express from 'express'
-import usgsRoutes from './usgs.routes'
+import usgsRoutes from './daily.routes'
 
 const router = express.Router()
 
-router.use('/usgs', usgsRoutes)
+router.use('/daily', usgsRoutes)
 
 export default router
