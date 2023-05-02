@@ -3,3 +3,9 @@ export interface DischargeValue {
   siteCode: string,
   values: {discharge: string, qualifier: string, date: string, }[]
 }
+
+export interface MonthDischargeValues{
+  siteName: string,
+  siteCode: string,
+  values: {month: string, discharges: string[]}[]
+}
