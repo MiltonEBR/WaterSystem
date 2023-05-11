@@ -124,21 +124,36 @@ export async function fetchDischargeMonthlySummary(req: Request, res: Response){
   }
 
   function getQuadrants(discharges: string[]){
-    
-    let min, q1, median, q3, max;
-    discharges.sort()
+    let min:string, q1:string, median:string, q3:string, max:string;
+    //Sort the array to get quadrants
+    discharges.sort((a,b) => {
+      if (Number(a) > Number(b)) {
+          return 1;
+      }
+  
+      if (Number(a) > Number(b)) {
+          return -1;
+      }
+  
+      return 0;
+    })
     min = discharges[0]
     max = discharges[discharges.length - 1]
+    //Middle point of the array
     median = getMedian(discharges)
-    const left = [];
-    const right = [];
-    for(let i = 0; i<discharges.length; i++){
-      if(i < Number(median)){
-        left.push(discharges[i])
-      }else{
-        right.push(discharges[i])
+
+    const left:string[] = [];
+    const right:string[] = [];
+    //Get left and right most part of the array
+    discharges.forEach(discharge => {
+      if(Number(discharge) < Number(median)){
+        left.push(discharge)
+      }else if(Number(discharge) > Number(median)){
+        right.push(discharge)
       }
-    }
+    })
+
+    //Middle point of each array
     q1 = getMedian(left)
     q3 = getMedian(right)
     
@@ -150,7 +165,7 @@ export async function fetchDischargeMonthlySummary(req: Request, res: Response){
     if (arr.length % 2 == 0)
         median = arr[(arr.length/2)]
     else
-        median =  arr[(arr.length/2) + .5]
+        median =  arr[(arr.length/2) - .5]
     
     return median
   }
