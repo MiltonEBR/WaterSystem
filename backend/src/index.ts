@@ -1,10 +1,12 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 import router from './routes/router';
+import cors from 'cors'
 
 const port = Number(process.env.PORT) || 4000;
 const app = express()
 
+app.use(cors())
 app.use(bodyParser.json())
 app.use(
   bodyParser.urlencoded({
