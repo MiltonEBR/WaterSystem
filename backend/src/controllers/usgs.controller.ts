@@ -88,8 +88,10 @@ export async function fetchDischargeMonthlySummary(req: Request, res: Response){
   
     const startDate = new Date(start)
     const endDate = new Date(end)
-    endDate.setMonth(endDate.getMonth()+1)
-  
+
+    startDate.setDate(startDate.getDate() + 1)
+    endDate.setDate(endDate.getDate() + 1)
+
     const url = generateDailyURL({endDate, startDate, sites, parameterCodes: ['00060'], statisticCodes: ['00003']})
 
     const qRes = await axios.get(url)
@@ -123,20 +125,24 @@ export async function fetchDischargeMonthlySummary(req: Request, res: Response){
     res.sendStatus(406)
   }
 
-  function getQuadrants(discharges: string[]){
+  function getQuadrants(discharges: string[], site?: any){
     let min:string, q1:string, median:string, q3:string, max:string;
+    let result
     //Sort the array to get quadrants
-    discharges.sort((a,b) => {
+    discharges = discharges.sort((a,b) => {
       if (Number(a) > Number(b)) {
           return 1;
       }
   
-      if (Number(a) > Number(b)) {
+      if (Number(a) < Number(b)) {
           return -1;
       }
   
       return 0;
+    }).filter(discharge => {
+      return Number(discharge) > 0 && discharge != null
     })
+
     min = discharges[0]
     max = discharges[discharges.length - 1]
     //Middle point of the array
@@ -153,20 +159,39 @@ export async function fetchDischargeMonthlySummary(req: Request, res: Response){
       }
     })
 
-    //Middle point of each array
-    q1 = getMedian(left)
-    q3 = getMedian(right)
+    //Middle point of each array (Check if there's enough values)
+    if(left.length > 0){
+      q1 = getMedian(left)
+    }else{
+      q1 = min
+    }
     
-    return [min, q1, median, q3, max]
+    if(right.length > 0){
+      q3 = getMedian(right)
+    }else{
+      q3 = max
+    }
+
+    //Boxplot array
+    result = [min, q1, median, q3, max]
+
+    return result
   }
 
   function getMedian(arr: string[]){
     let median
+    
     if (arr.length % 2 == 0)
         median = arr[(arr.length/2)]
     else
         median =  arr[(arr.length/2) - .5]
     
+    if(median == null){
+      arr.forEach(x => {
+        console.log(x)
+      })
+    }
     return median
   }
+
 }
