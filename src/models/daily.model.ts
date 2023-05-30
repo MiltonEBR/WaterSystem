@@ -9,3 +9,9 @@ export interface MonthDischargeValues{
   siteCode: string,
   values: {month: string, discharges: string[]}[]
 }
+
+export interface YearlyDischargeValues{
+  siteName: string,
+  siteCode: string,
+  values: {year: string, discharges: string[]}[]
+}

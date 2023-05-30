@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import axios from 'axios'
 import { generateDailyURL } from "../utils/util";
 import { DailyValuesResponse } from "../models/usgs.models";
-import { DischargeValue, MonthDischargeValues } from "../models/daily.model";
+import { DischargeValue, MonthDischargeValues, YearlyDischargeValues } from "../models/daily.model";
 
 export async function fetchDischargeData(req: Request, res: Response) {
   try {
@@ -72,6 +72,60 @@ export async function fetchDischargeMonthly(req: Request, res: Response){
       for(let month in values){
         result[siteName].values.push({month, discharges: values[month]})
       }
+      
+    }
+
+    res.json(Object.values(result))
+  } catch (error) {
+    res.sendStatus(406)
+  }
+}
+
+export async function fetchDischargeYearly(req: Request, res: Response){
+  try {
+    const {start, end, sites} = req.body
+    const startYear = Number(start || 0)
+    const endYear = Number(end || 0)
+    if(!startYear || !endYear || !sites || !sites.length) throw Error('Invalid parameters')
+  
+    const startOfYear = new Date(startYear, 0, 1);
+    const endOfYear =  new Date(endYear, 11, 31)
+  
+    const url = generateDailyURL({endDate: endOfYear, startDate: startOfYear, sites, parameterCodes: ['00060'], statisticCodes: ['00003']})
+    const qRes = await axios.get(url)
+    
+    if(!qRes.data) throw Error('No data returned')
+    
+    const data: DailyValuesResponse = qRes.data
+
+    const result: {[site:string]: YearlyDischargeValues} = {}
+    for(let series of data.value.timeSeries){
+      const siteName = series.sourceInfo.siteName
+      const siteCode = series.sourceInfo.siteCode[0].value
+      if(!(siteName in result)) result[siteName] = { siteName, siteCode, values:[] }
+      
+      const values: {date: string, value: string}[] = []
+      
+      for(let v of series.values[0].value){
+        const dateStr = v.dateTime.split('T')
+        const date = dateStr[0]
+
+        values.push({date, value: v.value})
+      }
+
+      values.sort((a,b) => (new Date(a.date)).getTime() - (new Date(b.date)).getTime())
+
+      const yearly: {[year:string]: string[]} = {}
+      for(let v of values){
+        const year = v.date.split('-')[0]
+        yearly[year] = yearly[year] || []
+        yearly[year].push(v.value)
+      } 
+
+      for(let year in yearly){
+        result[siteName].values.push({year, discharges: yearly[year]})
+      }
+
       
     }
 
