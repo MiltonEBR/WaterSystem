@@ -89,7 +89,7 @@ export async function fetchDischargeYearly(req: Request, res: Response){
     if(!startYear || !endYear || !sites || !sites.length) throw Error('Invalid parameters')
   
     const startOfYear = new Date(startYear - 1, 10, 1);
-    const endOfYear =  new Date(endYear, 9, 31)
+    const endOfYear =  new Date(endYear, 9, 30)
   
     const url = generateDailyURL({endDate: endOfYear, startDate: startOfYear, sites, parameterCodes: ['00060'], statisticCodes: ['00003']})
     const qRes = await axios.get(url)
