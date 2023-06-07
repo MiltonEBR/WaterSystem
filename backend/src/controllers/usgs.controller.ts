@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import axios from 'axios'
-import { generateDailyURL } from "../utils/util";
+import { generateDailyURL, sortStringsAsNums } from "../utils/util";
 import { DailyValuesResponse } from "../models/usgs.models";
 import { DischargeValue, MonthDischargeValues, YearlyDischargeValues } from "../models/daily.model";
 
@@ -84,9 +84,13 @@ export async function fetchDischargeMonthly(req: Request, res: Response){
 export async function fetchDischargeYearly(req: Request, res: Response){
   try {
     const {start, end, sites} = req.body
-    const startYear = Number(start || 0)
-    const endYear = Number(end || 0)
-    if(!startYear || !endYear || !sites || !sites.length) throw Error('Invalid parameters')
+    if(!start || !end || !sites || !sites.length) throw Error('Invalid parameters')
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    
+    const startYear = startDate.getUTCFullYear()
+    const endYear = endDate.getUTCFullYear()
+    console.log(startYear, endYear)
   
     const startOfYear = new Date(startYear - 1, 10, 1);
     const endOfYear =  new Date(endYear, 9, 30)
@@ -125,7 +129,7 @@ export async function fetchDischargeYearly(req: Request, res: Response){
       } 
 
       for(let year in yearly){
-        result[siteName].values.push({year, discharges: yearly[year]})
+        result[siteName].values.push({year, discharges: sortStringsAsNums(yearly[year])})
       }
 
       

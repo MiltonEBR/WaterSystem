@@ -16,3 +16,19 @@ export function generateDailyURL(options: DailyUrlOptions){
 
   return baseUrl
 }
+
+export function sortStringsAsNums(arr: string[]){
+  arr.sort((a,b) => {
+    if (Number(a) < Number(b)) {
+        return 1;
+    }
+
+    if (Number(a) > Number(b)) {
+        return -1;
+    }
+
+    return 0;
+  })
+
+  return arr
+}
