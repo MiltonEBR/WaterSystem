@@ -90,7 +90,6 @@ export async function fetchDischargeYearly(req: Request, res: Response){
     
     const startYear = startDate.getUTCFullYear()
     const endYear = endDate.getUTCFullYear()
-    console.log(startYear, endYear)
   
     const startOfYear = new Date(startYear - 1, 10, 1);
     const endOfYear =  new Date(endYear, 9, 30)
